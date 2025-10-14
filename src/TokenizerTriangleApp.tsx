@@ -1,10 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
 
-// Triangle plot placing tokenizers by barycentric weights over (Acoustic, Semantic, Linguistic)
-// Hover a point to see a rich tooltip with details from the user's guide.
-// TailwindCSS expected. Default export is a React component.
-
-// ---- Types ----
 type Weights = { acoustic: number; semantic: number; linguistic: number };
 
 type Tokenizer = {
@@ -12,25 +7,23 @@ type Tokenizer = {
   name: string;
   url: string;
   group: "acoustic" | "semantic" | "linguistic" | "hybrid";
-  weights: Weights; // sum to ~1
+  weights: Weights;
   frameRate: string;
   encoder: string;
   decoder: string;
-  rep: string; // T or T-F
+  rep: string;
   quant: string;
-  objectives: string; // e.g., "GAN, Feat, Rec, VQ"
-  aux: string; // e.g., "SD, SST, Dis, -"
-  notes?: string; // free-form short summary
+  objectives: string;
+  aux: string;
+  notes?: string;
 };
 
-// ---- Helpers ----
 function normalizeWeights(w: Weights): Weights {
   const s = w.acoustic + w.semantic + w.linguistic;
   if (s <= 0) return { acoustic: 1, semantic: 0, linguistic: 0 };
   return { acoustic: w.acoustic / s, semantic: w.semantic / s, linguistic: w.linguistic / s };
 }
 
-// Barycentric to Cartesian for triangle with vertices A, S, L
 function baryToXY(
   w: Weights,
   A: { x: number; y: number },
@@ -43,15 +36,13 @@ function baryToXY(
   return { x, y };
 }
 
-// ---- Data ----
 const DATA: Tokenizer[] = [
-  // --- Acoustic (pure) ---
   {
     id: "encodec",
     name: "EnCodec (2023)",
     url: "https://arxiv.org/abs/2210.13438",
     group: "acoustic",
-    weights: { acoustic: 0.90, semantic: 0.04, linguistic: 0.06 }, // lifted slightly off edge for spacing
+    weights: { acoustic: 0.90, semantic: 0.04, linguistic: 0.06 },
     frameRate: "75, 150 Hz",
     encoder: "CNN+RNN",
     decoder: "CNN",
@@ -91,14 +82,12 @@ const DATA: Tokenizer[] = [
     aux: "–",
     notes: "Acoustic tokens with single‑codebook quantization; LLM‑friendly token rates.",
   },
-
-  // --- Semantic‑distilled (SD) / Hybrid ---
   {
     id: "speechtokenizer",
     name: "SpeechTokenizer (2024)",
     url: "https://arxiv.org/abs/2308.16692",
     group: "semantic",
-    weights: { acoustic: 0.45, semantic: 0.50, linguistic: 0.05 }, // spacing tweak
+    weights: { acoustic: 0.45, semantic: 0.50, linguistic: 0.05 },
     frameRate: "50 Hz",
     encoder: "CNN+RNN",
     decoder: "CNN",
@@ -113,7 +102,7 @@ const DATA: Tokenizer[] = [
     name: "Mimi (2024)",
     url: "https://arxiv.org/abs/2410.00037",
     group: "semantic",
-    weights: { acoustic: 0.35, semantic: 0.58, linguistic: 0.07 }, // extra spacing among Mimi/SpeechTokenizer/X‑codec2
+    weights: { acoustic: 0.35, semantic: 0.58, linguistic: 0.07 },
     frameRate: "12.5 Hz",
     encoder: "CNN+Transformer",
     decoder: "CNN+Transformer",
@@ -143,7 +132,7 @@ const DATA: Tokenizer[] = [
     name: "X‑codec2 (2025)",
     url: "https://arxiv.org/pdf/2502.04128",
     group: "semantic",
-    weights: { acoustic: 0.33, semantic: 0.55, linguistic: 0.12 }, // spaced from Mimi & SpeechTokenizer
+    weights: { acoustic: 0.33, semantic: 0.55, linguistic: 0.12 },
     frameRate: "50 Hz",
     encoder: "Transformer + Semantic encoder",
     decoder: "Transformer (Vocos‑style)",
@@ -183,14 +172,12 @@ const DATA: Tokenizer[] = [
     aux: "Dis, SD",
     notes: "Ultra‑low bitrate; disentangles timbre from tokens via multi‑stage training.",
   },
-
-  // --- Linguistic‑supervised (SST / text‑aware) ---
   {
     id: "s3",
     name: "S3 (CosyVoice, 2024)",
     url: "https://fun-audio-llm.github.io/pdf/CosyVoice_v1.pdf",
     group: "linguistic",
-    weights: { acoustic: 0.05, semantic: 0.05, linguistic: 0.90 }, // near linguistic apex
+    weights: { acoustic: 0.05, semantic: 0.05, linguistic: 0.90 },
     frameRate: "–",
     encoder: "Transformer",
     decoder: "Transformer",
@@ -220,7 +207,7 @@ const DATA: Tokenizer[] = [
     name: "MiniMax‑Speech (2025)",
     url: "https://arxiv.org/pdf/2505.07916",
     group: "linguistic",
-    weights: { acoustic: 0.25, semantic: 0.05, linguistic: 0.70 }, // shifted toward Acoustic
+    weights: { acoustic: 0.25, semantic: 0.05, linguistic: 0.70 },
     frameRate: "25 Hz",
     encoder: "AR Transformer (tokenizer as VQ‑VAE)",
     decoder: "Transformer",
@@ -247,83 +234,12 @@ const DATA: Tokenizer[] = [
   },
 ];
 
-// Simple color mapping by group
 const GROUP_STYLE: Record<Tokenizer["group"], { fill: string; stroke: string; chip: string }> = {
   acoustic: { fill: "#60a5fa", stroke: "#1d4ed8", chip: "bg-blue-100 text-blue-800" },
   semantic: { fill: "#34d399", stroke: "#065f46", chip: "bg-emerald-100 text-emerald-800" },
   linguistic: { fill: "#f472b6", stroke: "#9d174d", chip: "bg-pink-100 text-pink-800" },
   hybrid: { fill: "#fbbf24", stroke: "#b45309", chip: "bg-amber-100 text-amber-800" },
 };
-
-// ---- Lightweight tests ----
-type TestResult = { name: string; passed: boolean; message?: string };
-
-function runTests(data: Tokenizer[], A: any, S: any, L: any): TestResult[] {
-  const out: TestResult[] = [];
-  // 1) unique ids
-  const ids = new Set<string>();
-  for (const d of data) {
-    if (ids.has(d.id)) out.push({ name: `unique id: ${d.id}`, passed: false, message: "duplicate id" });
-    ids.add(d.id);
-  }
-  if (out.length === 0) out.push({ name: "unique ids", passed: true });
-
-  // 2) required fields
-  for (const d of data) {
-    const ok = d.id && d.name && d.url && d.group && d.encoder && d.decoder && d.quant && d.objectives && d.rep;
-    out.push({ name: `required fields: ${d.id}`, passed: !!ok, message: ok ? undefined : "missing field(s)" });
-  }
-
-  // 3) weights sum ~ 1 and in [0,1]
-  for (const d of data) {
-    const w = d.weights;
-    const sum = w.acoustic + w.semantic + w.linguistic;
-    const inRange = [w.acoustic, w.semantic, w.linguistic].every((x) => x >= 0 && x <= 1);
-    const near = Math.abs(sum - 1) < 1e-6; // allow small numeric drift
-    out.push({ name: `weights valid: ${d.id}`, passed: inRange && near, message: `sum=${sum.toFixed(4)}` });
-  }
-
-  // 4) barycentric maps to finite screen coords
-  for (const d of data) {
-    const { x, y } = baryToXY(d.weights, A, S, L);
-    const finite = Number.isFinite(x) && Number.isFinite(y);
-    out.push({ name: `coords finite: ${d.id}`, passed: finite });
-  }
-
-  // 5) URL looks valid
-  for (const d of data) {
-    const valid = /^https?:\/\//.test(d.url);
-    out.push({ name: `url valid: ${d.id}`, passed: valid });
-  }
-
-  // 6) group value sanity
-  const allowed = new Set(["acoustic", "semantic", "linguistic", "hybrid"]);
-  for (const d of data) {
-    out.push({ name: `group valid: ${d.id}`, passed: allowed.has(d.group) });
-  }
-
-  // 7) separation test for DAC/EnCodec/WavTokenizer (avoid visual overlap)
-  const get = (id: string) => {
-    const d = data.find((x) => x.id === id)!;
-    return baryToXY(d.weights, A, S, L);
-  };
-  const P = { encodec: get("encodec"), dac: get("dac"), wav: get("wavtokenizer") };
-  const dist = (p: { x: number; y: number }, q: { x: number; y: number }) => Math.hypot(p.x - q.x, p.y - q.y);
-  const sep = 28; // px
-  out.push({ name: "spacing: encodec vs dac", passed: dist(P.encodec, P.dac) > sep });
-  out.push({ name: "spacing: encodec vs wavtokenizer", passed: dist(P.encodec, P.wav) > sep });
-  out.push({ name: "spacing: dac vs wavtokenizer", passed: dist(P.dac, P.wav) > sep });
-
-  // 8) S3 should be near linguistic apex
-  const s3 = data.find((d) => d.id === "s3");
-  if (s3) out.push({ name: "S3 near linguistic apex", passed: s3.weights.linguistic >= 0.9 });
-
-  // 9) MiniMax tilted toward Acoustic
-  const mm = data.find((d) => d.id === "minimax");
-  if (mm) out.push({ name: "MiniMax more acoustic", passed: mm.weights.acoustic >= 0.2 });
-
-  return out;
-}
 
 export default function TokenizerTriangleApp() {
   const [query, setQuery] = useState("");
@@ -335,8 +251,9 @@ export default function TokenizerTriangleApp() {
   });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [lockedId, setLockedId] = useState<string | null>(null);
-  const [showTests, setShowTests] = useState<boolean>(true);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const isEmbedded = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embedded") === "true";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -358,11 +275,9 @@ export default function TokenizerTriangleApp() {
     );
   }, [query, activeGroups]);
 
-  // Geometry
   const width = 900;
   const height = 720;
 
-  // Triangle vertices (A,S,L)
   const A = { x: 80, y: height - 80 };
   const S = { x: width - 80, y: height - 80 };
   const L = { x: width / 2, y: 80 };
@@ -377,20 +292,17 @@ export default function TokenizerTriangleApp() {
   const toggleGroup = (g: Tokenizer["group"]) =>
     setActiveGroups((st) => ({ ...st, [g]: !st[g] }));
 
-  const testResults = runTests(DATA, A, S, L);
-  const allPassed = testResults.every((t) => t.passed);
-
   return (
-    <div className="w-full min-h-screen bg-slate-950 text-slate-100 p-6">
-      <div className="max-w-6xl mx-auto space-y-4">
-        <header className="flex flex-col gap-2">
+    <div className={isEmbedded ? "w-screen h-screen bg-slate-950 text-slate-100 p-0 m-0" : "w-full min-h-screen bg-slate-950 text-slate-100 p-6"}>
+      <div className={isEmbedded ? "w-screen h-screen" : "max-w-6xl mx-auto space-y-4"}>
+        <header className={isEmbedded ? "hidden" : "flex flex-col gap-2"}>
           <h1 className="text-2xl md:text-3xl font-semibold">Speech Tokenizers: Acoustic • Semantic • Linguistic</h1>
           <p className="text-slate-300 text-sm md:text-base">
             Hover a point to preview details. Click a point to lock the tooltip. Use the chips to filter by group or search by name/architecture.
           </p>
         </header>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className={isEmbedded ? "hidden" : "flex flex-wrap items-center gap-3"}>
           {(Object.keys(GROUP_STYLE) as Array<Tokenizer["group"]>).map((g) => (
             <button
               key={g}
@@ -415,14 +327,13 @@ export default function TokenizerTriangleApp() {
           </div>
         </div>
 
-        <div className="bg-slate-900/60 rounded-2xl p-4 shadow-lg border border-slate-800">
+        <div className={isEmbedded ? "w-full h-full" : "bg-slate-900/60 rounded-2xl p-4 shadow-lg border border-slate-800"}>
           <div className="relative">
             <svg
               ref={svgRef}
               viewBox={`0 0 ${width} ${height}`}
-              className="w-full h-[72vh] max-h-[720px]"
+              className={isEmbedded ? "w-full h-full" : "w-full h-[72vh] max-h-[720px]"}
             >
-              {/* triangle */}
               <defs>
                 <linearGradient id="tri" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#0f172a" />
@@ -436,27 +347,23 @@ export default function TokenizerTriangleApp() {
                 strokeWidth={2}
               />
 
-              {/* grid lines */}
               {[0.25, 0.5, 0.75].map((t, i) => {
                 const interp = (P: any, Q: any, r: number) => ({ x: P.x + (Q.x - P.x) * r, y: P.y + (Q.y - P.y) * r });
                 const AL = interp(A, L, t);
                 const SL = interp(S, L, t);
                 return (
                   <g key={i}>
-                    {/* line roughly parallel to base */}
                     <line x1={AL.x} y1={AL.y} x2={SL.x} y2={SL.y} stroke="#1f2937" strokeDasharray="4 6" />
                   </g>
                 );
               })}
 
-              {/* vertex labels */}
               <g fontFamily="ui-sans-serif, system-ui" fontWeight={600}>
                 <text x={A.x - 10} y={A.y + 28} textAnchor="start" className="fill-blue-300">Acoustic</text>
                 <text x={S.x + 10} y={S.y + 28} textAnchor="end" className="fill-emerald-300">Semantic</text>
                 <text x={L.x} y={L.y - 16} textAnchor="middle" className="fill-pink-300">Linguistic</text>
               </g>
 
-              {/* points */}
               {points.map((p) => {
                 const style = GROUP_STYLE[p.d.group];
                 return (
@@ -474,7 +381,6 @@ export default function TokenizerTriangleApp() {
               })}
             </svg>
 
-            {/* Tooltip */}
             {current && (
               <Tooltip anchor={current} svgRef={svgRef}>
                 <Card tokenizer={current.d} />
@@ -482,31 +388,12 @@ export default function TokenizerTriangleApp() {
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-400">
+          <div className={isEmbedded ? "hidden" : "mt-3 flex flex-wrap gap-3 text-xs text-slate-400"}>
             <span>Mapping heuristics: pure waveform codecs → Acoustic vertex; SSL‑distilled → toward Semantic; explicit text/phoneme supervision or text‑aware diffusion → toward Linguistic.</span>
-          </div>
-
-          {/* Test Panel */}
-          <div className="mt-4 border-t border-slate-800 pt-3">
-            <button
-              className={`text-xs px-3 py-1.5 rounded-md border ${showTests ? "border-emerald-500 text-emerald-300" : "border-slate-600 text-slate-300"}`}
-              onClick={() => setShowTests((v) => !v)}
-            >
-              {showTests ? "Hide" : "Show"} tests {allPassed ? "✅" : "⚠️"}
-            </button>
-            {showTests && (
-              <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
-                {testResults.map((t, i) => (
-                  <li key={i} className={t.passed ? "text-emerald-300" : "text-rose-300"}>
-                    {t.passed ? "PASS" : "FAIL"} — {t.name}{t.message ? ` (${t.message})` : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
         </div>
 
-        <footer className="text-xs text-slate-400 pt-2">
+        <footer className={isEmbedded ? "hidden" : "text-xs text-slate-400 pt-2"}>
           <p>
             Sources summarized from the provided guide. Positions are heuristic (barycentric) to visualize emphasis, not strict measurements.
           </p>
@@ -516,7 +403,6 @@ export default function TokenizerTriangleApp() {
   );
 }
 
-// ---- Tooltip primitives ----
 function Tooltip({
   anchor,
   svgRef,
