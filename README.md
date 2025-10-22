@@ -8,7 +8,7 @@ This is a highly opinionated guide on speech tokenizers based on our experience 
 
 # Introduction
 
-This guide provides a short overview of modern (and a few classic) speech tokenizers. We focus on tokenizers for downstream TTS models—not general audio or music tokenization. The guide divides modern tokenizers into three categories: acoustic (low-level waveform information), semantic (pseudo-phonetic), and linguistic (high-level text information used as a training signal). Start by reviewing the diagram and table below, then explore the detailed description of each tokenizer group.
+This handbook provides a short overview of modern (and a few classic) speech tokenizers. We focus on tokenizers for downstream TTS models—not general audio or music tokenization. The guide divides modern tokenizers into three categories: acoustic (low-level waveform information), semantic (pseudo-phonetic), and linguistic (high-level text information used as a training signal). Start by reviewing the diagram and table below, then explore the detailed description of each tokenizer group.
 
 ## Overview
 
@@ -47,7 +47,7 @@ The following table presents architectural and key information for each tokenize
 
 EnCodec, DAC, and WavTokenizer are all characterized as **acoustic tokenizers**. This classification means they are "typically learned through encoder-decoder architectures optimized for waveform reconstruction"
 
-**Commonalities**
+**What they have in common?**
 
 EnCodec, DAC, and WavTokenizer share several fundamental design principles, as detailed in the survey's taxonomy:
 
@@ -56,7 +56,7 @@ EnCodec, DAC, and WavTokenizer share several fundamental design principles, as d
 3. **Training Objectives:** All three models are optimized using the same core combination of losses: Adversarial (GAN), Feature Matching (Feats), Reconstruction (Rec), and Vector Quantization (VQ).
 4. **Representation:** They operate in the Time (T) domain, processing raw waveforms as input and reconstructing them directly (Page 10).
 
-**Differences**
+**What are their differences?**
 
 The primary differences between the three models lie in their quantization strategies, architectural designs, streamability, and computational complexity.
 
@@ -100,9 +100,9 @@ It employs a **three-stage training framework**:
 
 FACodec, introduced as part of the NaturalSpeech 3 system, is designed to decompose speech waveforms into distinct, disentangled subspaces. This factorization aims to simplify the complex task of speech generation using a "divide-and-conquer" approach, improving quality and controllability in zero-shot Text-to-Speech (TTS).
 
-FACodec explicitly factorizes speech into four attributes: **Content, Prosody, Timbre, and Acoustic Details**. It achieves this using **Factorized Vector Quantization (FVQ)**, employing separate quantizers for content, prosody, and acoustic details, while timbre is captured by a dedicated timbre extractor as a global vector.
+The codec explicitly factorizes speech into four attributes: **Content, Prosody, Timbre, and Acoustic Details**. It achieves this using **Factorized Vector Quantization (FVQ)**, employing separate quantizers for content, prosody, and acoustic details, while timbre is captured by a dedicated timbre extractor as a global vector.
 
-FACodec relies on a combination of techniques to enforce this disentanglement, including information bottlenecks, **explicit supervision** (using phoneme labels, F0, and speaker IDs), and **adversarial training**. It operates at higher bitrates than LSCodec (e.g., 4.8 kbps) and uses multiple quantizers across the different factors.
+The model relies on a combination of techniques to enforce this disentanglement, including information bottlenecks, **explicit supervision** (using phoneme labels, F0, and speaker IDs), and **adversarial training**. It operates at higher bitrates than LSCodec (e.g., 4.8 kbps) and uses multiple quantizers across the different factors.
 
 **What they have in common?**
 
@@ -122,8 +122,6 @@ What is their difference?
 | **Quantization**        | Single codebook.                                                | Factorized VQ (FVQ) with multiple codebooks (e.g., 6 total).  |
 | **Factorization Scope** | Decouples Speaker from Content/Prosody.                         | Decouples Content, Prosody, Timbre, and Acoustic Details.     |
 | **Training Method**     | Multi-stage (VAE -> VQ-VAE -> Vocoder) with input perturbation. | Combined losses, supervision, and adversarial training (GRL). |
-
-Export to Sheets
 
 What were their novelties?
 

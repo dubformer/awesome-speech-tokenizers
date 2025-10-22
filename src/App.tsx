@@ -175,16 +175,6 @@ export default function App() {
           <div className="border-b border-slate-800 bg-slate-950/80 p-6">
             <TokenizerTriangleApp embedded />
           </div>
-          <div className="bg-slate-950/60 py-8">
-            <Section title="What the clusters mean">
-              <p>
-                The triangle corners correspond to the signal a tokenizer leans on most. Acoustic codecs chase waveform
-                fidelity, semantic codecs distill self-supervised speech models, and linguistic codecs rely on
-                text-form supervision to capture phonemes, syllables, or grapheme-level units.
-              </p>
-              <PillarGrid />
-            </Section>
-          </div>
         </div>
       </DemoPanel>
 
