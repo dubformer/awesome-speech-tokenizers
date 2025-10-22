@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { PillarGrid } from "./components/GuideComponents";
 
 type Weights = { acoustic: number; semantic: number; linguistic: number };
 
@@ -16,6 +17,10 @@ type Tokenizer = {
   objectives: string;
   aux: string;
   notes?: string;
+};
+
+type TokenizerTriangleAppProps = {
+  embedded?: boolean;
 };
 
 function normalizeWeights(w: Weights): Weights {
@@ -241,7 +246,7 @@ const GROUP_STYLE: Record<Tokenizer["group"], { fill: string; stroke: string; ch
   hybrid: { fill: "#fbbf24", stroke: "#b45309", chip: "bg-amber-100 text-amber-800" },
 };
 
-export default function TokenizerTriangleApp() {
+export default function TokenizerTriangleApp({ embedded }: TokenizerTriangleAppProps = {}) {
   const [query, setQuery] = useState("");
   const [activeGroups, setActiveGroups] = useState<Record<Tokenizer["group"], boolean>>({
     acoustic: true,
@@ -253,7 +258,9 @@ export default function TokenizerTriangleApp() {
   const [lockedId, setLockedId] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const isEmbedded = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embedded") === "true";
+  const isEmbedded =
+    embedded ??
+    (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embedded") === "true");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -292,9 +299,17 @@ export default function TokenizerTriangleApp() {
   const toggleGroup = (g: Tokenizer["group"]) =>
     setActiveGroups((st) => ({ ...st, [g]: !st[g] }));
 
+  const containerClass = isEmbedded
+    ? "flex h-full w-full flex-col space-y-5"
+    : "mx-auto max-w-6xl space-y-6";
+
+  const clusterSectionClass = isEmbedded
+    ? "space-y-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm md:text-base"
+    : "mt-10 space-y-5 rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-[0_0_80px_-32px_rgba(56,189,248,0.35)]";
+
   return (
-    <div className={isEmbedded ? "w-screen h-screen bg-slate-950 text-slate-100 p-0 m-0" : "w-full min-h-screen bg-slate-950 text-slate-100 p-6"}>
-      <div className={isEmbedded ? "w-screen h-screen" : "max-w-6xl mx-auto space-y-4"}>
+    <div className={isEmbedded ? "w-full min-h-full bg-slate-950 text-slate-100 p-0 m-0" : "w-full min-h-screen bg-slate-950 text-slate-100 p-6"}>
+      <div className={containerClass}>
         <header className={isEmbedded ? "hidden" : "flex flex-col gap-2"}>
           <h1 className="text-2xl md:text-3xl font-semibold">Speech Tokenizers: Acoustic • Semantic • Linguistic</h1>
           <p className="text-slate-300 text-sm md:text-base">
@@ -327,7 +342,7 @@ export default function TokenizerTriangleApp() {
           </div>
         </div>
 
-        <div className={isEmbedded ? "w-full h-full" : "bg-slate-900/60 rounded-2xl p-4 shadow-lg border border-slate-800"}>
+        <div className={isEmbedded ? "flex-1 w-full h-full" : "bg-slate-900/60 rounded-2xl p-4 shadow-lg border border-slate-800"}>
           <div className="relative">
             <svg
               ref={svgRef}
@@ -392,6 +407,18 @@ export default function TokenizerTriangleApp() {
             <span>Mapping heuristics: pure waveform codecs → Acoustic vertex; SSL‑distilled → toward Semantic; explicit text/phoneme supervision or text‑aware diffusion → toward Linguistic.</span>
           </div>
         </div>
+
+        <section className={clusterSectionClass}>
+          <h2 className="text-lg font-semibold text-sky-300 md:text-xl">What the clusters mean</h2>
+          <p className="text-slate-200">
+            The triangle corners correspond to the signal a tokenizer leans on most. Acoustic codecs chase waveform fidelity,
+            semantic codecs distill self-supervised speech models, and linguistic codecs rely on text-form supervision to
+            capture phonemes, syllables, or grapheme-level units.
+          </p>
+          <div className="mt-4">
+            <PillarGrid />
+          </div>
+        </section>
 
         <footer className={isEmbedded ? "hidden" : "text-xs text-slate-400 pt-2"}>
           <p>
