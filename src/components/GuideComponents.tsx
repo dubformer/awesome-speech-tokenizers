@@ -14,25 +14,35 @@ export function GuideLayout({ children }: LayoutProps) {
 
 type HeroProps = {
   title: string;
-  linkLabel: string;
-  linkHref: string;
+  linkLabel?: string;
+  linkHref?: string;
+  descriptionHtml?: string;
   children?: ReactNode;
 };
 
-export function Hero({ title, linkHref, linkLabel, children }: HeroProps) {
+export function Hero({ title, linkHref, linkLabel, descriptionHtml, children }: HeroProps) {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-6 pt-16">
       <header className="flex flex-col gap-3">
         <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-slate-300">{children}</p>
-        <a
-          className="text-sky-400 underline"
-          href={linkHref}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {linkLabel}
-        </a>
+        {descriptionHtml ? (
+          <div
+            className="text-slate-300 [&_a]:text-sky-300 [&_a]:underline [&_a:hover]:text-sky-200"
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          />
+        ) : children ? (
+          <p className="text-slate-300">{children}</p>
+        ) : null}
+        {linkHref && linkLabel && (
+          <a
+            className="text-sky-400 underline"
+            href={linkHref}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {linkLabel}
+          </a>
+        )}
       </header>
     </section>
   );

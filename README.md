@@ -1,6 +1,6 @@
 # Speech Tokenizers
 
-This guide with interactive demo is best viewed at [https://systemdevart.github.io/speech-tokenizers/](https://systemdevart.github.io/speech-tokenizers/)
+This guide with interactive demo is best viewed on out [blog page.](https://dubformer.github.io/awesome-speech-tokenizers/)
 
 **TL;DR**
 
@@ -12,43 +12,40 @@ This guide provides a short overview of modern (and a few classic) speech tokeni
 
 ## Overview
 
-[https://systemdevart.github.io/speech-tokenizers/?embedded=true](https://systemdevart.github.io/speech-tokenizers/?embedded=true)
-
 The following table presents architectural and key information for each tokenizer across these columns:
 
 - **Frame Rate** — How many acoustic tokens per second the tokenizer outputs. Lower is generally better, but the current standard is 25 Hz. This rate is easier for downstream speech models to handle: higher frequencies hurt intonation, while lower frequencies lose information and reduce sound quality.
 - **Encoder/Decoder** — Architecture choice. "T" stands for Transformer.
 - **Rep.** — The representation format the tokenizer accepts as input. "T" means time domain (raw waveform); "T-F" means time-frequency (mel spectrogram).
 - **Training Objectives** — The main losses used during training:
-    - **Rec** — Reconstruction (L2 loss on waveform or spectrogram)
-    - **VQ** — Vector-Quantization loss. Rarely used nowadays since FSQ and similar methods don't require it. This means the model includes **explicit losses to train the quantizer/codebook**, in addition to reconstruction/feature/GAN losses. These are necessary because straight-through quantization bypasses gradients through the codebook. Primarily the commitment loss.
-    - **Feat** — Feature matching loss (GAN-specific). Compares the discriminator's intermediate activations on real vs. reconstructed audio to stabilize GAN training and improve perceptual similarity.
-    - **Diff** — Diffusion or flow matching objective (instead of standard L2 mel or waveform reconstruction)
+  - **Rec** — Reconstruction (L2 loss on waveform or spectrogram)
+  - **VQ** — Vector-Quantization loss. Rarely used nowadays since FSQ and similar methods don't require it. This means the model includes **explicit losses to train the quantizer/codebook**, in addition to reconstruction/feature/GAN losses. These are necessary because straight-through quantization bypasses gradients through the codebook. Primarily the commitment loss.
+  - **Feat** — Feature matching loss (GAN-specific). Compares the discriminator's intermediate activations on real vs. reconstructed audio to stabilize GAN training and improve perceptual similarity.
+  - **Diff** — Diffusion or flow matching objective (instead of standard L2 mel or waveform reconstruction)
 - **Aux.** — Auxiliary losses, primarily for the semantic and linguistic groups:
-    - **SD** — **Semantic Distillation**: Uses pretrained SSL/linguistic features to guide (typically early) codebooks or latents
-    - **SST (linguistic for short)** — **Supervised Semantic Tokenization**: Supervised objectives (e.g., ASR/phonetic classification) applied to the tokens or first codebook to explicitly encode phonetic detail; sometimes combined with generative decoders (e.g., OT-CFM/diffusion)
-    - **Dis** — **Disentanglement**: Additional losses/modules that separate factors (e.g., speaker vs. content, speech vs. background), often via multi-branch encoders or codebooks, to reduce redundancy and enable independent control
-    
+  - **SD** — **Semantic Distillation**: Uses pretrained SSL/linguistic features to guide (typically early) codebooks or latents
+  - **SST (linguistic for short)** — **Supervised Semantic Tokenization**: Supervised objectives (e.g., ASR/phonetic classification) applied to the tokens or first codebook to explicitly encode phonetic detail; sometimes combined with generative decoders (e.g., OT-CFM/diffusion)
+  - **Dis** — **Disentanglement**: Additional losses/modules that separate factors (e.g., speaker vs. content, speech vs. background), often via multi-branch encoders or codebooks, to reduce redundancy and enable independent control
 
-| # | Tokenizer (paper) | Frame Rate | Encoder | Decoder | Rep. | Quant | Training Objective(s) | Aux. |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | [EnCodec (Défossez et al., 2023)](https://arxiv.org/abs/2210.13438) | 75, 150 | CNN+RNN | CNN | T | RVQ | GAN, Feat, Rec, VQ | – |
-| 2 | [DAC (Kumar et al., 2023)](https://arxiv.org/abs/2306.06546) | 75 | CNN | CNN | T | RVQ | GAN, Feat, Rec, VQ | – |
-| 3 | [WavTokenizer (Ji et al., 2024)](https://arxiv.org/abs/2408.16532) | 40, 75 | CNN+RNN | CNN+T | T | SVQ | GAN, Feat, Rec, VQ | – |
-| 4 | [SpeechTokenizer (Zhang et al., 2024)](https://arxiv.org/abs/2308.16692) | 50 | CNN+RNN | CNN | T | RVQ | GAN, Rec, Feat, VQ | SD |
-| 5 | [Mimi (Défossez et al., 2024)](https://arxiv.org/abs/2410.00037) | 12.5 | CNN+T | CNN+T | T | RVQ | GAN, Feat, Rec, VQ | SD |
-| 6 | [X-Codec (Ye et al., 2025)](https://arxiv.org/abs/2408.17175) | 50 | CNN | CNN | T | RVQ | GAN, Rec, VQ | SD |
-| 7 | [X-codec2 (Zhen et al., 2025)](https://arxiv.org/pdf/2502.04128) | 50 | CNN+T | T | T-F | FSQ | GAN, Rec | SD |
-| 8 | [FACodec (Ju et al., 2024)](https://arxiv.org/abs/2403.03100) | 80 | CNN+RNN | CNN+RNN | T | GRVQ | GAN, Feat, Rec, VQ | Dis |
-| 9 | [LSCodec (Guo et al., 2025)](https://arxiv.org/abs/2410.15764) | 25, 50 | CNN | CNN | T | SVQ | GAN, Feat, Rec | Dis, SD |
-| 10 | [S3 (Du et al., 2024)](https://fun-audio-llm.github.io/pdf/CosyVoice_v1.pdf) | – | T | T | T | FSQ | SST | *Diff |
-| 11 | [TaDiCodec (Wang et al., 2025)](https://arxiv.org/pdf/2508.16790) | 6.25 | T | T | T-F | FSQ (BSQ) | Diff | *SST |
-| 12 | [MaskGCT (Wang1 et al., 2024)](https://arxiv.org/pdf/2409.00750) | 49 | CNN | CNN | T-F | SVQ | Rec, VQ | SD |
-| 13 | [MiniMax-Speech (MiniMax, 2025)](https://arxiv.org/pdf/2505.07916) | 25 | - | - | - | - | Rec | *SST |
+| #   | Tokenizer (paper)                                                            | Frame Rate | Encoder | Decoder | Rep. | Quant     | Training Objective(s) | Aux.    |
+| --- | ---------------------------------------------------------------------------- | ---------- | ------- | ------- | ---- | --------- | --------------------- | ------- |
+| 1   | [EnCodec (Défossez et al., 2023)](https://arxiv.org/abs/2210.13438)          | 75, 150    | CNN+RNN | CNN     | T    | RVQ       | GAN, Feat, Rec, VQ    | –       |
+| 2   | [DAC (Kumar et al., 2023)](https://arxiv.org/abs/2306.06546)                 | 75         | CNN     | CNN     | T    | RVQ       | GAN, Feat, Rec, VQ    | –       |
+| 3   | [WavTokenizer (Ji et al., 2024)](https://arxiv.org/abs/2408.16532)           | 40, 75     | CNN+RNN | CNN+T   | T    | SVQ       | GAN, Feat, Rec, VQ    | –       |
+| 4   | [SpeechTokenizer (Zhang et al., 2024)](https://arxiv.org/abs/2308.16692)     | 50         | CNN+RNN | CNN     | T    | RVQ       | GAN, Rec, Feat, VQ    | SD      |
+| 5   | [Mimi (Défossez et al., 2024)](https://arxiv.org/abs/2410.00037)             | 12.5       | CNN+T   | CNN+T   | T    | RVQ       | GAN, Feat, Rec, VQ    | SD      |
+| 6   | [X-Codec (Ye et al., 2025)](https://arxiv.org/abs/2408.17175)                | 50         | CNN     | CNN     | T    | RVQ       | GAN, Rec, VQ          | SD      |
+| 7   | [X-codec2 (Zhen et al., 2025)](https://arxiv.org/pdf/2502.04128)             | 50         | CNN+T   | T       | T-F  | FSQ       | GAN, Rec              | SD      |
+| 8   | [FACodec (Ju et al., 2024)](https://arxiv.org/abs/2403.03100)                | 80         | CNN+RNN | CNN+RNN | T    | GRVQ      | GAN, Feat, Rec, VQ    | Dis     |
+| 9   | [LSCodec (Guo et al., 2025)](https://arxiv.org/abs/2410.15764)               | 25, 50     | CNN     | CNN     | T    | SVQ       | GAN, Feat, Rec        | Dis, SD |
+| 10  | [S3 (Du et al., 2024)](https://fun-audio-llm.github.io/pdf/CosyVoice_v1.pdf) | –          | T       | T       | T    | FSQ       | SST                   | \*Diff  |
+| 11  | [TaDiCodec (Wang et al., 2025)](https://arxiv.org/pdf/2508.16790)            | 6.25       | T       | T       | T-F  | FSQ (BSQ) | Diff                  | \*SST   |
+| 12  | [MaskGCT (Wang1 et al., 2024)](https://arxiv.org/pdf/2409.00750)             | 49         | CNN     | CNN     | T-F  | SVQ       | Rec, VQ               | SD      |
+| 13  | [MiniMax-Speech (MiniMax, 2025)](https://arxiv.org/pdf/2505.07916)           | 25         | -       | -       | -    | -         | Rec                   | \*SST   |
 
 ## 1–3. Acoustic Tokenizers: EnCodec, DAC, and WavTokenizer
 
-EnCodec, DAC, and WavTokenizer are all characterized as **acoustic tokenizers**. This classification means they are "typically learned through encoder-decoder architectures optimized for waveform reconstruction" 
+EnCodec, DAC, and WavTokenizer are all characterized as **acoustic tokenizers**. This classification means they are "typically learned through encoder-decoder architectures optimized for waveform reconstruction"
 
 **Commonalities**
 
@@ -79,13 +76,13 @@ These four tokenizers are representative of "hybrid" models designed to bridge t
 
 **What are their differences?**
 
-| Feature | SpeechTokenizer | Mimi | X-Codec | X-Codec2 |
-| --- | --- | --- | --- | --- |
-| **Quantization** | RVQ (Hierarchical) | RVQ (Hierarchical) | RVQ (Hierarchical) | SVQ/FSQ (Flat) |
-| **Domain** | Speech | Speech | Multi-domain | Multilingual Speech |
-| **Frame Rate** | 50 Hz | **12.5 Hz** | 50 Hz | 50 Hz |
-| **Architecture** | CNN+RNN/CNN | CNN+T/CNN+T | CNN/CNN (Dual) | Transformer/Vocos |
-| **Streamable** | Yes | **No** | Yes | Yes |
+| Feature          | SpeechTokenizer    | Mimi               | X-Codec            | X-Codec2            |
+| ---------------- | ------------------ | ------------------ | ------------------ | ------------------- |
+| **Quantization** | RVQ (Hierarchical) | RVQ (Hierarchical) | RVQ (Hierarchical) | SVQ/FSQ (Flat)      |
+| **Domain**       | Speech             | Speech             | Multi-domain       | Multilingual Speech |
+| **Frame Rate**   | 50 Hz              | **12.5 Hz**        | 50 Hz              | 50 Hz               |
+| **Architecture** | CNN+RNN/CNN        | CNN+T/CNN+T        | CNN/CNN (Dual)     | Transformer/Vocos   |
+| **Streamable**   | Yes                | **No**             | Yes                | Yes                 |
 
 The key differences lie in the quantization strategy (RVQ vs. SVQ), the significantly lower frame rate of Mimi, and the domain scope (speech-specific vs. universal/multilingual).
 
@@ -117,14 +114,14 @@ FACodec relies on a combination of techniques to enforce this disentanglement, i
 
 What is their difference?
 
-| Feature | LSCodec | FACodec |
-| --- | --- | --- |
-| **Supervision** | Entirely unsupervised. | Supervised (requires phonemes, F0, speaker IDs). |
-| **Primary Goal** | Ultra-low bitrate and speaker decoupling. | Comprehensive attribute factorization and high fidelity. |
-| **Bitrate** | Very low (e.g., 0.25–0.45 kbps). | Moderate (e.g., 4.8 kbps). |
-| **Quantization** | Single codebook. | Factorized VQ (FVQ) with multiple codebooks (e.g., 6 total). |
-| **Factorization Scope** | Decouples Speaker from Content/Prosody. | Decouples Content, Prosody, Timbre, and Acoustic Details. |
-| **Training Method** | Multi-stage (VAE -> VQ-VAE -> Vocoder) with input perturbation. | Combined losses, supervision, and adversarial training (GRL). |
+| Feature                 | LSCodec                                                         | FACodec                                                       |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Supervision**         | Entirely unsupervised.                                          | Supervised (requires phonemes, F0, speaker IDs).              |
+| **Primary Goal**        | Ultra-low bitrate and speaker decoupling.                       | Comprehensive attribute factorization and high fidelity.      |
+| **Bitrate**             | Very low (e.g., 0.25–0.45 kbps).                                | Moderate (e.g., 4.8 kbps).                                    |
+| **Quantization**        | Single codebook.                                                | Factorized VQ (FVQ) with multiple codebooks (e.g., 6 total).  |
+| **Factorization Scope** | Decouples Speaker from Content/Prosody.                         | Decouples Content, Prosody, Timbre, and Acoustic Details.     |
+| **Training Method**     | Multi-stage (VAE -> VQ-VAE -> Vocoder) with input perturbation. | Combined losses, supervision, and adversarial training (GRL). |
 
 Export to Sheets
 
@@ -142,7 +139,7 @@ The methodologies for achieving disentanglement are fundamentally different, pri
 LSCodec relies on data manipulation and architectural constraints to force disentanglement without labels:
 
 1. **Speaker Perturbation:** LSCodec actively modifies the input audio using a time-stretching approach (WSOLA algorithm). This alters the global pitch and timbre while retaining the content and pitch variations.
-2. **Forced Information Routing:** Because the encoder input is timbre-perturbed, but the decoder must reconstruct the *original* audio, the model is forced to obtain the correct timbre information from the separate reference prompt provided to the decoder.
+2. **Forced Information Routing:** Because the encoder input is timbre-perturbed, but the decoder must reconstruct the _original_ audio, the model is forced to obtain the correct timbre information from the separate reference prompt provided to the decoder.
 3. **VAE/VQ Bottleneck:** The inherent bottleneck in the VAE and VQ layers encourages the model to discard information provided elsewhere. Since timbre is supplied via the prompt, the tokens prioritize encoding only the time-variant information (content and prosody).
 
 **FACodec: Disentanglement via Supervision and Adversarial Constraints**
@@ -167,19 +164,19 @@ TaDiCodec (Text-aware Diffusion Transformer Speech Codec) designed to produce hi
 
 X-codec2 is a speech tokenizer introduced within the Llasa framework. The codec aims to capture the entirety of the speech signal - content, prosody, and timbre - within this unified token stream, requiring no additional information during the decoding process.
 
-**Vocabulary (Codebook) Size:**The vocabulary size is **65,536**.
+**Vocabulary (Codebook) Size:** The vocabulary size is **65,536**.
 
-**What Makes it Unique and Different:**X-codec2 builds upon its predecessor (X-codec) but introduces critical modifications that differentiate it from many other neural codecs and enhance its compatibility with LLMs:
+**What Makes it Unique and Different:** X-codec2 builds upon its predecessor (X-codec) but introduces critical modifications that differentiate it from many other neural codecs and enhance its compatibility with LLMs:
 
 1. **Fusion of Semantic and Acoustic Features:** The architecture employs a dual-encoder approach to fuse information before quantization:
-    - A **Semantic Encoder** (a pre-trained Wav2Vec2-BERT) captures high-level multilingual content and emotional cues.
-    - An **Acoustic Encoder** (residual convolutional blocks) captures low-level acoustic details and timbre.
+   - A **Semantic Encoder** (a pre-trained Wav2Vec2-BERT) captures high-level multilingual content and emotional cues.
+   - An **Acoustic Encoder** (residual convolutional blocks) captures low-level acoustic details and timbre.
 2. **Semantic Supervision:** To ensure the unified codebook retains sufficient linguistic information, an auxiliary semantic decoder is used during training (though not during inference). This provides a supervisory signal by reconstructing semantic features from the quantized representation.
 3. **Transformer-based Decoder:** It utilizes a Transformer-based decoder (following the Vocos design) that predicts the Short-Time Fourier Transform (STFT) magnitude and phase, which are then converted back to the waveform via an iSTFT head.
 
 ## 13. MaskGCT
 
-MaskGCT (Masked Generative Codec Transformer) is a fully non-autoregressive (NAR) Text-to-Speech (TTS) system introduced in the paper "MaskGCT: Zero-Shot Text-to-Speech with Masked Generative Codec Transformer." 
+MaskGCT (Masked Generative Codec Transformer) is a fully non-autoregressive (NAR) Text-to-Speech (TTS) system introduced in the paper "MaskGCT: Zero-Shot Text-to-Speech with Masked Generative Codec Transformer."
 
 The system employs a two-stage architecture: Text-to-Semantic (T2S) and Semantic-to-Acoustic (S2A). Both stages utilize a mask-and-predict training paradigm, enabling parallel generation during inference and allowing control over the duration of the synthesized speech.
 
@@ -299,3 +296,7 @@ By 2026, the need for seamless integration with LLMs will mandate the use of fla
 6. Fully Transformer-Native Architectures
 
 The transition from CNN/RNN and hybrid models will likely complete. State-of-the-art tokenizers in 2026 will predominantly adopt fully Transformer-based architectures for both encoding and decoding, capitalizing on their scalability and effectiveness in modeling long-range dependencies.
+
+## Contributions
+
+If you want to contribute to this guide, feel free to open a pull request with changes to the README.md file.
