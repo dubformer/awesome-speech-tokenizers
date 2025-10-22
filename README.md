@@ -199,7 +199,7 @@ The specific implementation of the tokenizer and the overall architecture surrou
 
 ## Metrics to Compare Speech Tokenizers
 
-Here’s a compact map of the metrics this paper uses to compare (speech) tokenizers, grouped by what they measure.
+To be honest, we don't trust standalone speech tokenizer metrics - they barely transfer to the final TTS model and poorly correlate with what we consider "a good speech representation." But for the sake of completeness, if you train your own tokenizers, you'll need to track some objectives. Here's a compact map of the metrics to compare speech tokenizers, grouped by what they measure.
 
 **1) Reconstruction & perceptual quality (Codec-SUPERB / VERSA)**
 
